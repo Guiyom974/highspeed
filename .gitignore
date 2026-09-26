@@ -1,0 +1,23 @@
+# Python / venv
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Django runtime state
+backend/data/
+backend/staticfiles/
+
+# Node / frontend
+node_modules/
+frontend/dist/
+
+# Model weights (downloaded separately; see models/README.md)
+models/*
+!models/README.md
+
+# OS / editor noise
+Thumbs.db
+.DS_Store
+.vscode/
+.playwright-mcp/

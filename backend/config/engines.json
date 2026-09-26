@@ -1,0 +1,66 @@
+{
+  "models_dir": "models",
+  "engines": {
+    "nanojev": {
+      "kind": "local-decision-head",
+      "license": "MIT",
+      "params": "0.6B",
+      "languages": ["en"],
+      "repo_scripts": "NanoJev/scripts",
+      "checkpoint": "NanoJev/weights",
+      "limits": { "states": 32, "questions": 96, "candidate_paths": 256, "max_length": 512, "options": 255, "score_levels": 10 },
+      "calibrated": false,
+      "order_sensitive": true,
+      "devices": ["cpu", "cuda"],
+      "wire": "states/questions (boolean|choice|score)"
+    },
+    "openjev-nli": {
+      "kind": "nli-cross-encoder",
+      "license": "MIT",
+      "params": "0.8B",
+      "languages": ["en"],
+      "model_dir": "openjev/qwen3.5-0.8b-nli-v2s-long",
+      "modeling": "openjev/modeling_openjev.py",
+      "limits": { "states": 32, "questions": 96, "max_length": 4096, "options": 64, "score_levels": 10 },
+      "calibrated": false,
+      "order_sensitive": false,
+      "devices": ["cpu", "cuda"],
+      "wire": "states/questions mapped to premise/hypothesis NLI"
+    },
+    "semif": {
+      "kind": "logit-readout",
+      "license": "MIT",
+      "params": "0.6B-4B backbone",
+      "languages": ["en"],
+      "repo": "SemIf",
+      "backbone": "backbones/Qwen3-0.6B",
+      "limits": { "options": 16 },
+      "calibrated": false,
+      "order_sensitive": true,
+      "devices": ["cuda", "mps", "cpu-via-gguf"],
+      "wire": "rows (id,state,question,options[2-16]); use its CLI: semif-score --backend llamacpp"
+    },
+    "typesafe": {
+      "kind": "hosted",
+      "license": "proprietary",
+      "languages": ["multilingual"],
+      "endpoint": "https://api.typesafe.ai/v1/systemone",
+      "env": ["TYPESAFE_API_KEY", "TYPESAFE_BASE_URL"],
+      "model": "jev-latest",
+      "limits": { "context": 64000, "options": 255 },
+      "calibrated": true,
+      "order_sensitive": false,
+      "devices": ["remote"]
+    }
+  },
+  "profiles": {
+    "cpu-en": { "engine": "nanojev", "device": "cpu", "precision": "fp32", "act_gate": 0.9 },
+    "gpu-en": { "engine": "nanojev", "device": "cuda", "precision": "bf16", "act_gate": 0.9 },
+    "cpu-nli": { "engine": "openjev-nli", "device": "cpu", "act_gate": 0.9 },
+    "gpu-nli": { "engine": "openjev-nli", "device": "cuda", "act_gate": 0.9 },
+    "multilingual": { "engine": "typesafe", "act_gate": 0.85 },
+    "hosted": { "engine": "typesafe", "act_gate": 0.85 }
+  },
+  "routing": { "default": "below", "review": "between", "floor": 0.5 },
+  "options": { "order_average_choice_min": 2, "timeout_seconds": 300 }
+}
